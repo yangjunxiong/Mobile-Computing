@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Unit : MonoBehaviour {
-    public int health;
+    public int maxHealth;
     public int damage;
     public float speed;
     public float attackRange;
@@ -17,8 +17,13 @@ public class Unit : MonoBehaviour {
     protected Animator animator;
     protected TileMouseHandle assignedTile = null;
     protected Renderer renderer;
+    protected HealthBarController healthBarController;
     protected Effect effect;
+    protected Color originalColor;
+    protected int health;
+    protected int[] effectCounter;  // 0 - slow, 1 - vulnerable
 
+    protected const int slowEffectRatio = 5;
     protected const float attackerFaceDirection = -20f;
     protected const float defenderFaceDirection = 20f;
     protected const float getAttackHighlightTime = 0.25f;
@@ -36,11 +41,20 @@ public class Unit : MonoBehaviour {
         controller = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
         animator = GetComponent<Animator>();
         renderer = GetComponent<Renderer>();
+        healthBarController = GetComponentInChildren<HealthBarController>();
+        health = maxHealth;
+        transform.LookAt(new Vector3(transform.position.x, transform.position.y, isAttacker? attackerFaceDirection : defenderFaceDirection));
+        speed = isAttacker ? -speed : speed;
+        originalColor = renderer.material.color;
+        effectCounter = new int[2];
+        effectCounter[0] = 0;
+        effectCounter[1] = 0;
     }
 
     public virtual void Update() {
-        if (canMove)
-            rb.velocity = transform.forward * speed;
+        if (canMove) {
+            transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z + speed * Time.deltaTime);
+        }
 
         if (isAttacker && transform.position.z <= controller.GetFinishPoint().position.z)
             controller.RequestGameOver(controller.isAttacker);
@@ -53,14 +67,17 @@ public class Unit : MonoBehaviour {
     }
 
     public virtual void GetEffect(Effect effect, float time) {
-        if (this.effect != Effect.None)
-            EndEffect(this.effect);
         switch (effect) {
             case Effect.Slow:
-                speed /= 2;
+                if (effectCounter[0] <= 0)
+                    speed /= slowEffectRatio;
+                effectCounter[0]++;
                 break;
             case Effect.Stop:
                 canMove = false;
+                break;
+            case Effect.Vulnerable:
+                effectCounter[1]++;
                 break;
         }
         this.effect = effect;
@@ -72,13 +89,21 @@ public class Unit : MonoBehaviour {
             return;
         switch (effect) {
             case Effect.Slow:
-                speed *= 2;
+                if (effectCounter[0] == 1) {
+                    speed *= slowEffectRatio;
+                    this.effect = Effect.None;
+                }
+                effectCounter[0]--;
                 break;
             case Effect.Stop:
                 canMove = true;
                 break;
+            case Effect.Vulnerable:
+                effectCounter[1]--;
+                if (effectCounter[1] == 0)
+                    this.effect = Effect.None;
+                break;
         }
-        this.effect = Effect.None;
     }
 
     public virtual void Attack() { }
@@ -107,10 +132,13 @@ public class Unit : MonoBehaviour {
         float minDistance = 1000f;
         for (int i = 0; i < list.Length; i++) {
             Vector3 position = list[i].transform.position;
-            if (list[i].GetComponent<Unit>().isAttacker != isAttacker && position.x == transform.position.x) {
-                float distance = position.z - transform.position.z;
+            Unit other = list[i].GetComponent<Unit>();
+            if (!other)
+                other = list[i].GetComponentInChildren<Unit>();
+            if (other.isAttacker != isAttacker && position.x == transform.position.x) {
+                float distance = Mathf.Abs(transform.position.z - position.z);
                 if (distance <= attackRange && distance < minDistance) {
-                    minDistance = position.z - transform.position.z;
+                    minDistance = distance;
                     toAttack = list[i];
                 }
             }
@@ -121,7 +149,8 @@ public class Unit : MonoBehaviour {
     protected IEnumerator GetAttackRoutine() {
         renderer.material.color = Color.red;
         yield return new WaitForSeconds(getAttackHighlightTime);
-        renderer.material.color = Color.white;
+        renderer.material.color = originalColor;
+        healthBarController.SetScale((float)health/maxHealth);
     }
 
     protected IEnumerator GetEffectRoutine(Effect effect, float time) {

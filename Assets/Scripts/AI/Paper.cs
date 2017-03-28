@@ -5,12 +5,14 @@ using UnityEngine;
 public class Paper : Unit {
     public float fireRate;
 
+    private GameObject toAttack = null;
     private float nextFire;
     private bool isAttacking = false;
 
     public override void Update()
     {
-        base.Update();
+        if (!toAttack)
+            base.Update();
         Attack();
     }
 
@@ -19,8 +21,10 @@ public class Paper : Unit {
         base.Attack();
         if (!isAttacking && Time.time > nextFire && animator.GetCurrentAnimatorStateInfo(0).IsName(animMoveName))
         {
-            GameObject toAttack = FindEnemyInAttackRange();
-            if (toAttack) {
+            if (!toAttack)
+                toAttack = FindEnemyInAttackRange();
+            if (toAttack)
+            {
                 animator.SetTrigger(animAttackName);
                 isAttacking = true;
                 StartCoroutine(AttackRoutine(toAttack));
@@ -42,7 +46,7 @@ public class Paper : Unit {
     public override void Die()
     {
         base.Die();
-        controller.UnitDie(gameObject);
+        controller.UnitDie(transform.parent.gameObject);
         animator.SetTrigger(animDieName);
         nextFire = Time.time + 1000f;
         StartCoroutine(DieRoutine());
@@ -51,7 +55,7 @@ public class Paper : Unit {
     IEnumerator AttackRoutine(GameObject toAttack)
     {
         yield return new WaitForSeconds(FindAnimationLength(animAttackName));
-        toAttack.GetComponent<Unit>().GetDamage(damage);
+        toAttack.GetComponentInChildren<Unit>().GetDamage(damage);
         nextFire = Time.time + fireRate;
         isAttacking = false;
     }
@@ -59,6 +63,6 @@ public class Paper : Unit {
     IEnumerator DieRoutine()
     {
         yield return new WaitForSeconds(FindAnimationLength(animDieName));
-        Destroy(gameObject);
+        Destroy(transform.parent.gameObject);
     }
 }

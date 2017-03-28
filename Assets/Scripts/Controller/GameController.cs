@@ -6,7 +6,6 @@ using UnityEngine.UI;
 public class GameController : MonoBehaviour {
     public GameObject[] attackerPrefabs;
     public GameObject[] defenderPrefabs;
-    public Text prompt;
     public GameObject attackList, defendList;
     public bool isAttacker = false;
     public bool inGame = true;
@@ -39,14 +38,17 @@ public class GameController : MonoBehaviour {
         unitName[0] = "Pencil";
         unitName[1] = "Desk";
         unitName[2] = "Cabinet";
+        unitName[3] = "Bottle";
         remainingUnitNumber = new int[4];
         remainingUnitNumber[0] = 100;
         remainingUnitNumber[1] = 5;
         remainingUnitNumber[2] = 5;
+        remainingUnitNumber[3] = 3;
         unitCooldownTime = new float[4];
         unitCooldownTime[0] = 5f;
         unitCooldownTime[1] = 10f;
         unitCooldownTime[2] = 10f;
+        unitCooldownTime[3] = 8f;
 
         // Assign appropriate value according to role
         if (isAttacker) {

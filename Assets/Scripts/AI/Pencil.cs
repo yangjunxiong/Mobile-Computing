@@ -55,6 +55,6 @@ public class Pencil : Unit {
 
     IEnumerator DieRoutine() {
         yield return new WaitForSeconds(FindAnimationLength(animDieName));
-        Destroy(gameObject);
+        Destroy(transform.parent.gameObject);
     }
 }
