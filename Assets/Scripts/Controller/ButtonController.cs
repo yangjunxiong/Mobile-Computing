@@ -4,11 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class ButtonController : MonoBehaviour {
-    public Text nameText;
     public Text numberText;
-    public Text cooldownText;
     public Image cooldownImage;
-    public string name;
     public int number;
     public float cooldownTime;
 
@@ -16,37 +13,37 @@ public class ButtonController : MonoBehaviour {
     private float speed;
     private float remainingTime = 0f;
     private float height = 0f;
+    private float buttonSizeX, buttonSizeY;
 
-    private const int buttonSize = 120;
+    private void Start() {
+        buttonSizeX = cooldownImage.rectTransform.sizeDelta.x;
+        buttonSizeY = cooldownImage.rectTransform.sizeDelta.y;
+    }
 
     void Update() {
         if (number <= 0) {
             numberText.text = "0";
-            cooldownText.text = "";
-            cooldownImage.rectTransform.sizeDelta = new Vector2(buttonSize, buttonSize);
+            cooldownImage.rectTransform.sizeDelta = new Vector2(buttonSizeX, buttonSizeY);
             gameObject.GetComponent<Button>().interactable = false;
             return;
         }
 
         if (isCooldown) {
             height = Mathf.MoveTowards(cooldownImage.rectTransform.sizeDelta.y, 0f, speed * Time.deltaTime);
-            remainingTime = Mathf.Round(height / buttonSize * cooldownTime);
+            remainingTime = Mathf.Round(height / buttonSizeY * cooldownTime);
             numberText.text = number.ToString();
-            cooldownText.text = remainingTime > 0f ? (int)(remainingTime / 60) + ":" + (int)(remainingTime % 60) : "";
-            cooldownImage.rectTransform.sizeDelta = new Vector2(buttonSize, height);
+            cooldownImage.rectTransform.sizeDelta = new Vector2(buttonSizeX, height);
         }
         else {
-            cooldownText.text = "";
             numberText.text = number.ToString();
-            cooldownImage.rectTransform.sizeDelta = new Vector2(buttonSize, 0f);
+            cooldownImage.rectTransform.sizeDelta = new Vector2(buttonSizeX, 0f);
         }
-        nameText.text = name;
     }
 
     public void Cooldown() {
         number--;
-        speed = buttonSize / cooldownTime;
-        cooldownImage.rectTransform.sizeDelta = new Vector2(buttonSize, buttonSize);
+        speed = buttonSizeY / cooldownTime;
+        cooldownImage.rectTransform.sizeDelta = new Vector2(buttonSizeX, buttonSizeY);
         StartCoroutine(CoolDownCount());
     }
 
