@@ -9,6 +9,8 @@ public class Unit : MonoBehaviour {
     public float attackRange;
     public bool canMove;
     public bool isAttacker;
+    public AudioClip attackAudio, dieAudio;
+    public GameObject soundPlayer;
 
     public enum Effect { None, Slow, Stop, Vulnerable };
 
@@ -17,6 +19,7 @@ public class Unit : MonoBehaviour {
     protected Animator animator;
     protected TileMouseHandle assignedTile = null;
     protected Renderer renderer;
+    protected AudioSource audioSource;
     protected HealthBarController healthBarController;
     protected Effect effect;
     protected Color originalColor;
@@ -41,6 +44,7 @@ public class Unit : MonoBehaviour {
         controller = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>();
         animator = GetComponent<Animator>();
         renderer = GetComponent<Renderer>();
+        audioSource = GetComponent<AudioSource>();
         healthBarController = GetComponentInChildren<HealthBarController>();
         health = maxHealth;
         transform.LookAt(new Vector3(transform.position.x, transform.position.y, isAttacker? attackerFaceDirection : defenderFaceDirection));
@@ -61,8 +65,6 @@ public class Unit : MonoBehaviour {
     }
 
     public virtual void GetDamage(int damage) {
-        if (effect == Effect.Vulnerable)
-            damage *= 2;
         StartCoroutine(GetAttackRoutine());
     }
 
@@ -108,7 +110,10 @@ public class Unit : MonoBehaviour {
 
     public virtual void Attack() { }
 
-    public virtual void Die() { }
+    public virtual void Die() {
+        audioSource.clip = dieAudio;
+        audioSource.Play();
+    }
 
     public void SetAssignedTile(TileMouseHandle tile) {
         assignedTile = tile;
@@ -131,6 +136,8 @@ public class Unit : MonoBehaviour {
         GameObject toAttack = null;
         float minDistance = 1000f;
         for (int i = 0; i < list.Length; i++) {
+            if (list[i] == null)
+                continue;
             Vector3 position = list[i].transform.position;
             Unit other = list[i].GetComponent<Unit>();
             if (!other)

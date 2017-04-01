@@ -5,6 +5,8 @@ using UnityEngine;
 public class Projectile : MonoBehaviour {
     public float speed;
     public int damage;
+    public GameObject soundPlayer;
+    public AudioClip collisionAudio;
 
     protected Rigidbody rb;
 
@@ -18,6 +20,10 @@ public class Projectile : MonoBehaviour {
 
     protected virtual void Update() {
         rb.velocity = transform.forward * speed;
+    }
+
+    public virtual void OnTriggerEnter(Collider other) {
+        Instantiate(soundPlayer, transform.position, Quaternion.identity).GetComponent<SoundPlayerController>().Play(collisionAudio, collisionAudio.length);
     }
 
     public virtual void Rotate(float xAngle, float yAngle, float zAngle) {

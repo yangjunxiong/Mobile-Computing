@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0fbd95bd188378a4593547a6f46da086
+timeCreated: 1491043819
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - soundPlayer: {instanceID: 0}
+  - collisionAudio: {fileID: 8300000, guid: 86732499fa0212a43be8bb210bc6bbf0, type: 3}
+  - particle: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

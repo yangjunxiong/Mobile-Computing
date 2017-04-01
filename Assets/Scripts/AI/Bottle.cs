@@ -30,6 +30,8 @@ public class Bottle : Unit {
     public override void GetDamage(int damage)
     {
         base.GetDamage(damage);
+        if (effect == Effect.Vulnerable)
+            damage *= 2;
         if (health > 0)
         {
             health -= damage;
@@ -52,6 +54,8 @@ public class Bottle : Unit {
         yield return new WaitForSeconds(FindAnimationLength(animAttackName));
         Instantiate(bullet, bulletSpawn.position, Quaternion.identity);
         nextFire = Time.time + fireRate;
+        audioSource.clip = attackAudio;
+        audioSource.Play();
         isAttacking = false;
     }
 

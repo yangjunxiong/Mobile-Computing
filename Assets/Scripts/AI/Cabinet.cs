@@ -6,6 +6,8 @@ public class Cabinet : Unit {
     public override void GetDamage(int damage)
     {
         base.GetDamage(damage);
+        if (effect == Effect.Vulnerable)
+            damage *= 2;
         if (health > 0)
         {
             health -= damage;

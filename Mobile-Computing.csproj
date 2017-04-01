@@ -13,11 +13,13 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile></CompilerResponseFile>
+    <CompilerResponseFile>
+    </CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>Android:13</UnityBuildTarget>
     <UnityVersion>5.5.2f1</UnityVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
     <LangVersion Condition=" '$(VisualStudioVersion)' != '10.0' ">4</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -81,27 +83,32 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\AI\Bomb.cs" />
     <Compile Include="Assets\Scripts\AI\Book.cs" />
     <Compile Include="Assets\Scripts\AI\Bottle.cs" />
     <Compile Include="Assets\Scripts\AI\Cabinet.cs" />
     <Compile Include="Assets\Scripts\AI\Desk.cs" />
     <Compile Include="Assets\Scripts\AI\Paper.cs" />
     <Compile Include="Assets\Scripts\AI\Pencil.cs" />
+    <Compile Include="Assets\Scripts\AI\Skull.cs" />
     <Compile Include="Assets\Scripts\AI\Unit.cs" />
     <Compile Include="Assets\Scripts\Controller\ButtonController.cs" />
     <Compile Include="Assets\Scripts\Controller\ButtonListController.cs" />
     <Compile Include="Assets\Scripts\Controller\GameController.cs" />
     <Compile Include="Assets\Scripts\Controller\HealthBarController.cs" />
+    <Compile Include="Assets\Scripts\Controller\SoundPlayerController.cs" />
     <Compile Include="Assets\Scripts\Controller\TileMouseHandle.cs" />
     <Compile Include="Assets\Scripts\Physics\ParticleController.cs" />
     <Compile Include="Assets\Scripts\Physics\Projectile.cs" />
     <Compile Include="Assets\Scripts\Physics\RegularBulletController.cs" />
+    <Compile Include="Assets\Scripts\Physics\SkullBulletController.cs" />
     <Compile Include="Assets\Scripts\Physics\SlowingBulletController.cs" />
     <Compile Include="Assets\_Import\Particle Ribbon\Scripts\ReverseNormals.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\_Import\Particle Ribbon\readme_Simple_Particle_Ribbon.txt" />
     <None Include="Assets\_Import\PowerUps Vol 1 Free\Readme.txt" />
+    <None Include="Assets\ref.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

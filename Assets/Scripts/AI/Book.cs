@@ -56,6 +56,8 @@ public class Book : Unit {
         yield return new WaitForSeconds(FindAnimationLength(animAttackName));
         toAttack.GetComponentInChildren<Unit>().GetDamage(damage);
         nextFire = Time.time + fireRate;
+        audioSource.clip = attackAudio;
+        audioSource.Play();
         isAttacking = false;
     }
 
