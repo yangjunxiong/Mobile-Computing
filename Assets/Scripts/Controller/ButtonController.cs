@@ -8,8 +8,8 @@ public class ButtonController : MonoBehaviour {
     public Image cooldownImage;
     public int number;
     public float cooldownTime;
+    public bool isCooldown = false;
 
-    private bool isCooldown = false;
     private float speed;
     private float remainingTime = 0f;
     private float height = 0f;

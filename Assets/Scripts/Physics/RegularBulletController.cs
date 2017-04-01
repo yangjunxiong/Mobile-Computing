@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class RegularBulletController : Projectile {
-    private void OnTriggerEnter(Collider other)
+    public override void OnTriggerEnter(Collider other)
     {
         if (other.tag == attackerTagName) {
+            base.OnTriggerEnter(other);
             other.gameObject.GetComponent<Unit>().GetDamage(damage);
             Destroy(gameObject);
         }

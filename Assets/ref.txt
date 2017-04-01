@@ -1,0 +1,16 @@
+Model:
+Pencil - Zuvola, Unity Asset Store
+ScrollFree - Bodiana, Unity Asset Store
+Books Pack - Vertex Studio, Unity Asset Store
+Cobblestone - George Panayiotou, Unity Asset Store
+FreeFurnitureSet - Lef, Unity Asset Store
+Particle Ribbon - Moonflower Carnivore, Unity Asset Store
+PowerUps Vol 1 Free - Viscircle, Unity Asset Store
+stone_floor_texture - 3dfancy, Unity Asset Store
+
+Audio:
+Die, Effect, Gameover, Hit_Effect, Hit_Normal, Shoot - https://www.freesound.org
+Explosion Sound Used In Old Movies - Alexander, http://http://www.orangefreesounds.com
+Happy Electronic Music - Alexander Blu, http://http://www.orangefreesounds.com
+
+Other:

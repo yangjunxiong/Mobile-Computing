@@ -6,10 +6,11 @@ public class SlowingBulletController : Projectile {
     public GameObject particle;
     public float slowingTime;
 
-    private void OnTriggerEnter(Collider other)
+    public override void OnTriggerEnter(Collider other)
     {
         if (other.tag == attackerTagName)
         {
+            base.OnTriggerEnter(other);
             other.gameObject.GetComponent<Unit>().GetEffect(Unit.Effect.Slow, slowingTime);
             Destroy(gameObject);
             GameObject obj = Instantiate(particle, other.transform.position, other.transform.rotation);

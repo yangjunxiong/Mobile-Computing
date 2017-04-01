@@ -1,10 +1,12 @@
 fileFormatVersion: 2
 guid: 27f9e3b01c25aa049ad17ec4e3035839
-timeCreated: 1489831771
+timeCreated: 1491043793
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - soundPlayer: {instanceID: 0}
+  - collisionAudio: {fileID: 8300000, guid: 08d805c6f16da2f4c8567c9bd33a7f1c, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

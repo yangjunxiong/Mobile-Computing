@@ -30,6 +30,8 @@ public class Desk : Unit {
     public override void GetDamage(int damage)
     {
         base.GetDamage(damage);
+        if (effect == Effect.Vulnerable)
+            damage *= 2;
         if (health > 0)
         {
             health -= damage;
@@ -54,6 +56,8 @@ public class Desk : Unit {
         Instantiate(bullet, midSpawn.position, Quaternion.identity);
         Instantiate(bullet, rightSpawn.position, Quaternion.identity).GetComponent<Projectile>().Rotate(0f, 15f, 0f);
         nextFire = Time.time + fireRate;
+        audioSource.clip = attackAudio;
+        audioSource.Play();
         isAttacking = false;
     }
 
