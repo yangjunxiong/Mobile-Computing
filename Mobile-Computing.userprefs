@@ -1,0 +1,14 @@
+﻿<Properties StartupItem="Assembly-CSharp.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\Sonia\Rotate.cs">
+    <Files>
+      <File FileName="Assets\Scripts\Sonia\RegOnClick.cs" Line="19" Column="3" />
+      <File FileName="Assets\Scripts\Sonia\LoginOnClick.cs" Line="4" Column="1" />
+      <File FileName="Assets\Scripts\Sonia\Rotate.cs" Line="16" Column="28" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
