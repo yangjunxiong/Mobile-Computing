@@ -3,24 +3,24 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 public class GameController : NetworkBehaviour {
     public GameObject[] attackerPrefabs;
     public GameObject[] defenderPrefabs;
     public Sprite attackWin, attackLose, defendWin, defendLose;
     public AudioClip gameBGM, gameoverAudio;
-    public bool isAttacker = false;
-    public bool inGame = true;
-    public float gameoverTime = 120f;
+    public float pairTryRate;
     public float pollRate;
+    public float gameoverTime = 120f;
+    public float returnMenuTime;
+    public bool isAttacker;
 
-    private int id = 2;
-    private int roundID = 1;
-    private string playerName;
-    private string enemyName;
-
-    private bool ready = false;
-    private bool gameover = false;
+    private int id = -1;
+    private int roundID;
+    private int enemyID;
+    private bool ready;
+    private bool gameover;
     private float timeOfStart;
     private Canvas canvas;
     private AudioSource audioSource;
@@ -38,78 +38,128 @@ public class GameController : NetworkBehaviour {
     private float[] unitCooldownTime;
 
     private const int nullObjectIndex = -1;
+    private const string menuSceneName = "Menu";
+    private const string gameSceneName = "Round";
+    private const string mapSceneName = "Map";
     private const string attackTileTagName = "AttackTile";
     private const string defendeTileTagName = "DefendeTile";
     private const string tileTagName = "Tile";
     private const string finishPointTagName = "Finish";
     private const string url = "http://mobilecomputing-codingbear.c9users.io/";
 
+    void OnEnable() {
+        SceneManager.sceneLoaded += onSceneLoaded;
+    }
+
+    void OnDisable() {
+        SceneManager.sceneLoaded -= onSceneLoaded;
+    }
+
+    void onSceneLoaded(Scene scene, LoadSceneMode mode) {
+        if (scene.name == menuSceneName) {
+            roundID = -1;
+            enemyID = -1;
+            ready = false;
+            gameover = false;
+        }
+        else if (scene.name == gameSceneName) {
+            // Retrieve unit data from server
+            Time.timeScale = 0f;
+            StartCoroutine(RetrieveUnitsRoutine());
+
+            // Initialize UI
+            canvas = FindObjectOfType<Canvas>();
+            attackList = canvas.transform.Find("Attack List").gameObject;
+            defendList = canvas.transform.Find("Defende List").gameObject;
+            gameoverImage = canvas.transform.Find("Gameover Image").gameObject;
+            gameoverImage.SetActive(false);
+            timerText = canvas.transform.Find("Timer").transform.Find("Time").GetComponent<Text>();
+
+            // Assign appropriate value according to role
+            if (isAttacker) {
+                defendList.SetActive(false);
+                buttons = attackList.GetComponent<ButtonListController>().buttons;
+                spawnTiles = GameObject.FindGameObjectsWithTag(attackTileTagName);
+                enemyTiles = GameObject.FindGameObjectsWithTag(defendeTileTagName);
+                prefabs = attackerPrefabs;
+                enemyPrefabs = defenderPrefabs;
+            }
+            else {
+                attackList.SetActive(false);
+                buttons = defendList.GetComponent<ButtonListController>().buttons;
+                spawnTiles = GameObject.FindGameObjectsWithTag(defendeTileTagName);
+                enemyTiles = GameObject.FindGameObjectsWithTag(attackTileTagName);
+                prefabs = defenderPrefabs;
+                enemyPrefabs = attackerPrefabs;
+            }
+            otherTiles = GameObject.FindGameObjectsWithTag(tileTagName);
+
+            // Other initialization
+            for (int i = 0; i < spawnTiles.Length; i++)
+                spawnTiles[i].GetComponent<TileMouseHandle>().tileIndex = i;
+            for (int i = 0; i < enemyTiles.Length; i++)
+                enemyTiles[i].GetComponent<TileMouseHandle>().tileIndex = i;
+            activeUnits = new List<GameObject>();
+            finishPoint = GameObject.FindGameObjectWithTag(finishPointTagName).transform;
+            audioSource = GetComponent<AudioSource>();
+            audioSource.clip = gameBGM;
+            audioSource.Play();
+        }
+        else if (scene.name == mapSceneName) {
+
+        }
+    }
+
     private void Start() {
-        // Selection according to different scenes
-        if (!inGame)
-            return;
-
-        // Retrieve unit data from server
-        Time.timeScale = 0f;
-        StartCoroutine(RetrieveUnitsRoutine());
-
-        // Initialize UI
-        canvas = FindObjectOfType<Canvas>();
-        attackList = canvas.transform.Find("Attack List").gameObject;
-        defendList = canvas.transform.Find("Defende List").gameObject;
-        gameoverImage = canvas.transform.Find("Gameover Image").gameObject;
-        gameoverImage.SetActive(false);
-        timerText = canvas.transform.Find("Timer").transform.Find("Time").GetComponent<Text>();
-
-        // Assign appropriate value according to role
-        if (isAttacker) {
-            defendList.SetActive(false);
-            buttons = attackList.GetComponent<ButtonListController>().buttons;
-            spawnTiles = GameObject.FindGameObjectsWithTag(attackTileTagName);
-            enemyTiles = GameObject.FindGameObjectsWithTag(defendeTileTagName);
-            prefabs = attackerPrefabs;
-            enemyPrefabs = defenderPrefabs;
-        }
-        else {
-            attackList.SetActive(false);
-            buttons = defendList.GetComponent<ButtonListController>().buttons;
-            spawnTiles = GameObject.FindGameObjectsWithTag(defendeTileTagName);
-            enemyTiles = GameObject.FindGameObjectsWithTag(attackTileTagName);
-            prefabs = defenderPrefabs;
-            enemyPrefabs = attackerPrefabs;
-        }
-        otherTiles = GameObject.FindGameObjectsWithTag(tileTagName);
-
-        // Other initialization
-        for (int i = 0; i < spawnTiles.Length; i++)
-            spawnTiles[i].GetComponent<TileMouseHandle>().tileIndex = i;
-        for (int i = 0; i < enemyTiles.Length; i++)
-            enemyTiles[i].GetComponent<TileMouseHandle>().tileIndex = i;
-        activeUnits = new List<GameObject>();
-        finishPoint = GameObject.FindGameObjectWithTag(finishPointTagName).transform;
-        audioSource = GetComponent<AudioSource>();
-        audioSource.clip = gameBGM;
-        audioSource.Play();
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Update() {
-        if (!inGame)
-            return;
-        if (!ready || gameover)
-            return;
-
-        int tempTime = (int)(gameoverTime - (Time.time - timeOfStart));
-        timerText.text = (tempTime / 60).ToString() + " : " + (tempTime % 60).ToString();
-
-        // Gameover situation: attack uses up all units
-        if (isAttacker) {
-            if (activeUnits.Count <= 0 && remainingUnitNumber[0] == 0 && remainingUnitNumber[1] == 0 && remainingUnitNumber[2] == 0 && remainingUnitNumber[3] == 0)
-                RequestGameOver(false);
+        if (SceneManager.GetActiveScene().name == gameSceneName) {
+            if (!ready || gameover)
+                return;
+            int tempTime = (int)(gameoverTime - (Time.time - timeOfStart));
+            timerText.text = (tempTime / 60).ToString() + " : " + (tempTime % 60).ToString();
+            // Gameover situation: attack uses up all units
+            if (isAttacker) {
+                if (activeUnits.Count <= 0 && remainingUnitNumber[0] == 0 && remainingUnitNumber[1] == 0 && remainingUnitNumber[2] == 0 && remainingUnitNumber[3] == 0)
+                    RequestGameOver(false);
+            }
+            // Gameover situation: time up
+            if (tempTime <= 0f)
+                RequestGameOver(isAttacker ? false : true);
         }
+        else if (SceneManager.GetActiveScene().name == menuSceneName) {
 
-        // Gameover situation: time up
-        if (tempTime <= 0f)
-            RequestGameOver(isAttacker ? false : true);
+        }
+        else if (SceneManager.GetActiveScene().name == mapSceneName) {
+
+        }
+    }
+
+    // Send pair request to server
+    public void NewGame(string side) {
+        if (id == -1)
+            return;
+        StartCoroutine(PairRoutine(side));
+    }
+
+    public void Login() {
+        if (id != -1)
+            return;
+        StartCoroutine(LoginRoutine("", ""));
+    }
+
+    public void Register() {
+        if (id != -1)
+            return;
+        StartCoroutine(RegisterRoutine("", ""));
+    }
+
+    public void ChangeToMap() {
+        if (id == -1)
+            return;
+        SceneManager.LoadScene(mapSceneName);
     }
 
     // When spawn buttons are clicked, this function will change selected unit to spawn
@@ -187,7 +237,6 @@ public class GameController : NetworkBehaviour {
     private void Gameover(bool win) {
         if (gameover)
             return;
-
         gameover = true;
         StopCoroutine(PollRoutine());
         audioSource.clip = gameoverAudio;
@@ -201,6 +250,7 @@ public class GameController : NetworkBehaviour {
             gameoverImage.GetComponent<Image>().sprite = win ? defendWin : defendLose;
         gameoverImage.SetActive(true);
         Time.timeScale = 0f;
+        StartCoroutine(ReturnMenuRoutine());
     }
 
     private GameObject FindTileByName(string name) {
@@ -222,6 +272,48 @@ public class GameController : NetworkBehaviour {
                 buttons[i].interactable = on;
         for (int i = 0; i < spawnTiles.Length; i++)
             spawnTiles[i].layer = on ? 0 : 2;
+    }
+
+    IEnumerator LoginRoutine(string name, string password) {
+        WWW www = new WWW(url + "Login.php?name=" + name + "&password=" + password);
+        yield return www;
+        if (www.text != "NO") {
+            id = int.Parse(www.text);
+        }
+    }
+
+    IEnumerator RegisterRoutine(string name, string password) {
+        WWW www = new WWW(url + "Register.php?name=" + name + "&password=" + password);
+        yield return www;
+        if (www.text != "NO")
+        {
+            id = int.Parse(www.text);
+        }
+    }
+
+    IEnumerator PairRoutine(string side) {
+        while (true) {
+            yield return new WaitForSeconds(pairTryRate);
+            WWW www = new WWW(url + "Pair.php?id=" + id + "&roundID=" + roundID + "&side=" + side);
+            yield return www;
+
+            if (www.text != "NO") {
+                PairInfo pair = JsonUtility.FromJson<PairInfo>(www.text);
+                roundID = pair.id;
+                if (pair.attackerID > 0 && pair.defenderID > 0) {
+                    if (pair.attackerID == id) {
+                        enemyID = pair.defenderID;
+                        isAttacker = true;
+                    }
+                    else {
+                        enemyID = pair.attackerID;
+                        isAttacker = false;
+                    }
+                    SceneManager.LoadScene(gameSceneName);
+                    break;
+                }
+            }
+        }
     }
 
     IEnumerator RetrieveUnitsRoutine() {
@@ -293,6 +385,22 @@ public class GameController : NetworkBehaviour {
                     Gameover(true);
             }
         }
+    }
+
+    IEnumerator ReturnMenuRoutine() {
+        yield return new WaitForSeconds(returnMenuTime);
+        SceneManager.LoadScene(menuSceneName);
+    }
+}
+
+[System.Serializable]
+class PairInfo {
+    public int id;
+    public int attackerID;
+    public int defenderID;
+
+    public PairInfo(int id) {
+        this.id = id;
     }
 }
 
