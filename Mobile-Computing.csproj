@@ -101,15 +101,15 @@
     <Compile Include="Assets\Scripts\MainMenu\QuitOnClick.cs" />
     <Compile Include="Assets\Scripts\MainMenu\RegOnClick.cs" />
     <Compile Include="Assets\Scripts\MainMenu\Rotate.cs" />
-    <Compile Include="Assets\Scripts\Map\CountDownTimer.cs" />
+    <Compile Include="Assets\Scripts\Map\CollectIcon.cs" />
     <Compile Include="Assets\Scripts\Map\GameManager.cs" />
     <Compile Include="Assets\Scripts\Map\GeoPoint.cs" />
+    <Compile Include="Assets\Scripts\Map\GetRandomIcon.cs" />
     <Compile Include="Assets\Scripts\Map\GoogleStaticMap.cs" />
     <Compile Include="Assets\Scripts\Map\ObjectPosition.cs" />
     <Compile Include="Assets\Scripts\Map\PlayerLocationService.cs" />
     <Compile Include="Assets\Scripts\Map\SimpleController.cs" />
     <Compile Include="Assets\Scripts\Map\Singleton.cs" />
-    <Compile Include="Assets\Scripts\Map\getRandomCard.cs" />
     <Compile Include="Assets\Scripts\Physics\ParticleController.cs" />
     <Compile Include="Assets\Scripts\Physics\Projectile.cs" />
     <Compile Include="Assets\Scripts\Physics\RegularBulletController.cs" />
