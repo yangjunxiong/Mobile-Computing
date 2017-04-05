@@ -16,9 +16,20 @@ public class GameController : NetworkBehaviour {
     public float returnMenuTime;
     public bool isAttacker;
 
+    // Persistent variables
     private int id = -1;
+    private string playerName;
     private int roundID;
     private int enemyID;
+
+    // Variables for "Menu"
+    private Text playerNameText;
+    private GameObject mainCanvas, loginCanvas, regCanvas, startCanvas, helpCanvas, chooseCanvas, queueCanvas;
+    private InputField loginNameField, loginPasswordField;
+    private InputField regNameField, regPasswordField, regConfirmPasswordField;
+    private Button loginButton, registerButton, attackerButton, defenderButton, cancelWaitButton;
+
+    // Variables for "Round"
     private bool ready;
     private bool gameover;
     private float timeOfStart;
@@ -37,15 +48,39 @@ public class GameController : NetworkBehaviour {
     private int[] remainingUnitNumber;
     private float[] unitCooldownTime;
 
+    // General constants
+    public string url = "http://mobilecomputing-codingbear.c9users.io/";
+    public string initSceneName = "Init";
+    public string menuSceneName = "Menu";
+    public string gameSceneName = "Round";
+    public string mapSceneName = "Map";
+
+    // Constants for "Menu"
+    private const string mainCanvasName = "mainMenuCanvas";
+    private const string loginCanvasName = "LoginCanvas";
+    private const string regCanvasName = "RegCanvas";
+    private const string startCanvasName = "StartCanvas";
+    private const string helpCanvasName = "HelpCanvas";
+    private const string chooseCanvasName = "ChooseCanvas";
+    private const string queueCanvasName = "QueueCanvas";
+    private const string playerNameTextName = "playerNameText";
+    private const string loginNameInputFieldName = "LoginUsernameInputField";
+    private const string loginPasswordInputFieldName = "LoginPasswordInputField";
+    private const string regNameInputFieldName = "RegUsernameInputField";
+    private const string regPasswordInputFieldName = "RegPasswordInputField";
+    private const string regConfirmPasswordInputFieldName = "RegConfPasswordInputField";
+    private const string loginButtonName = "LoginButton";
+    private const string regButtonName = "RegButton";
+    private const string attackerButtonName = "AttackButton";
+    private const string defenderButtonName = "DefenseButton";
+    private const string cancelWaitButtonName = "CancelWaitButton";
+
+    // Constants for "Round"
     private const int nullObjectIndex = -1;
-    private const string menuSceneName = "Menu";
-    private const string gameSceneName = "Round";
-    private const string mapSceneName = "Map";
     private const string attackTileTagName = "AttackTile";
     private const string defendeTileTagName = "DefendeTile";
     private const string tileTagName = "Tile";
     private const string finishPointTagName = "Finish";
-    private const string url = "http://mobilecomputing-codingbear.c9users.io/";
 
     void OnEnable() {
         SceneManager.sceneLoaded += onSceneLoaded;
@@ -56,11 +91,50 @@ public class GameController : NetworkBehaviour {
     }
 
     void onSceneLoaded(Scene scene, LoadSceneMode mode) {
-        if (scene.name == menuSceneName) {
+        Time.timeScale = 1f;
+        audioSource.Stop();
+        if (scene.name == initSceneName) {
+            SceneManager.LoadScene(menuSceneName);
+        }
+        else if (scene.name == menuSceneName) {
             roundID = -1;
             enemyID = -1;
             ready = false;
             gameover = false;
+
+            mainCanvas = GameObject.Find(mainCanvasName);
+            startCanvas = GameObject.Find(startCanvasName);
+            loginCanvas = GameObject.Find(loginCanvasName);
+            regCanvas = GameObject.Find(regCanvasName);
+            helpCanvas = GameObject.Find(helpCanvasName);
+            chooseCanvas = GameObject.Find(chooseCanvasName);
+            queueCanvas = GameObject.Find(queueCanvasName);
+
+            loginNameField = GameObject.Find(loginNameInputFieldName).GetComponent<InputField>();
+            loginPasswordField = GameObject.Find(loginPasswordInputFieldName).GetComponent<InputField>();
+            regNameField = GameObject.Find(regNameInputFieldName).GetComponent<InputField>();
+            regPasswordField = GameObject.Find(regPasswordInputFieldName).GetComponent<InputField>();
+            regConfirmPasswordField = GameObject.Find(regConfirmPasswordInputFieldName).GetComponent<InputField>();
+
+            playerNameText = GameObject.Find(playerNameTextName).GetComponent<Text>();
+            loginButton = GameObject.Find(loginButtonName).GetComponent<Button>();
+            loginButton.onClick.AddListener(Login);
+            registerButton = GameObject.Find(regButtonName).GetComponent<Button>();
+            registerButton.onClick.AddListener(Register);
+            attackerButton = GameObject.Find(attackerButtonName).GetComponent<Button>();
+            attackerButton.onClick.AddListener(() => NewGame("attacker"));
+            defenderButton = GameObject.Find(defenderButtonName).GetComponent<Button>();
+            defenderButton.onClick.AddListener(() => NewGame("defender"));
+            cancelWaitButton = GameObject.Find(cancelWaitButtonName).GetComponent<Button>();
+            cancelWaitButton.onClick.AddListener(CancelWait);
+
+            ToggleCanvas(false);
+            if (id == -1)
+                mainCanvas.SetActive(true);
+            else {
+                startCanvas.SetActive(true);
+                playerNameText.text = "Welcome, " + playerName;
+            }
         }
         else if (scene.name == gameSceneName) {
             // Retrieve unit data from server
@@ -101,8 +175,6 @@ public class GameController : NetworkBehaviour {
                 enemyTiles[i].GetComponent<TileMouseHandle>().tileIndex = i;
             activeUnits = new List<GameObject>();
             finishPoint = GameObject.FindGameObjectWithTag(finishPointTagName).transform;
-            audioSource = GetComponent<AudioSource>();
-            audioSource.clip = gameBGM;
             audioSource.Play();
         }
         else if (scene.name == mapSceneName) {
@@ -110,8 +182,10 @@ public class GameController : NetworkBehaviour {
         }
     }
 
-    private void Start() {
+    private void Awake() {
         DontDestroyOnLoad(gameObject);
+        audioSource = GetComponent<AudioSource>();
+        audioSource.clip = gameBGM;
     }
 
     private void Update() {
@@ -137,6 +211,10 @@ public class GameController : NetworkBehaviour {
         }
     }
 
+    public void LoadScene(string name) {
+        SceneManager.LoadScene(name);
+    }
+
     // Send pair request to server
     public void NewGame(string side) {
         if (id == -1)
@@ -147,13 +225,30 @@ public class GameController : NetworkBehaviour {
     public void Login() {
         if (id != -1)
             return;
-        StartCoroutine(LoginRoutine("", ""));
+        string name = loginNameField.text;
+        string password = loginPasswordField.text;
+        loginNameField.text = "";
+        loginPasswordField.text = "";
+        StartCoroutine(LoginRoutine(name, password));
     }
 
     public void Register() {
         if (id != -1)
             return;
-        StartCoroutine(RegisterRoutine("", ""));
+        string name = regNameField.text;
+        string password = regPasswordField.text;
+        string password2 = regConfirmPasswordField.text;
+        if (password == password2) {
+            regNameField.text = "";
+            regPasswordField.text = "";
+            regConfirmPasswordField.text = "";
+            StartCoroutine(RegisterRoutine(name, password));
+        }
+    }
+
+    public void CancelWait() {
+        StopAllCoroutines();
+        StartCoroutine(CancelPairRoutine());
     }
 
     public void ChangeToMap() {
@@ -212,7 +307,8 @@ public class GameController : NetworkBehaviour {
 
     // This will send Gameover request to server
     public void RequestGameOver(bool win) {
-        StartCoroutine(RequestGameoverRoutine(win));
+        if (!gameover)
+            StartCoroutine(RequestGameoverRoutine(win));
     }
 
     public void UnitDie(GameObject unit) {
@@ -234,6 +330,16 @@ public class GameController : NetworkBehaviour {
         return finishPoint;
     }
 
+    private void ToggleCanvas(bool on) {
+        mainCanvas.SetActive(on);
+        loginCanvas.SetActive(on);
+        regCanvas.SetActive(on);
+        startCanvas.SetActive(on);
+        helpCanvas.SetActive(on);
+        chooseCanvas.SetActive(on);
+        queueCanvas.SetActive(on);
+    }
+
     private void Gameover(bool win) {
         if (gameover)
             return;
@@ -250,7 +356,6 @@ public class GameController : NetworkBehaviour {
             gameoverImage.GetComponent<Image>().sprite = win ? defendWin : defendLose;
         gameoverImage.SetActive(true);
         Time.timeScale = 0f;
-        StartCoroutine(ReturnMenuRoutine());
     }
 
     private GameObject FindTileByName(string name) {
@@ -278,7 +383,12 @@ public class GameController : NetworkBehaviour {
         WWW www = new WWW(url + "Login.php?name=" + name + "&password=" + password);
         yield return www;
         if (www.text != "NO") {
-            id = int.Parse(www.text);
+            id = int.Parse(www.text.Split('#')[0]);
+            playerName = www.text.Split('#')[1];
+            SceneManager.LoadScene(menuSceneName);
+        }
+        else {
+            playerNameText.text = "Wrong name or password!";
         }
     }
 
@@ -287,7 +397,9 @@ public class GameController : NetworkBehaviour {
         yield return www;
         if (www.text != "NO")
         {
-            id = int.Parse(www.text);
+            id = int.Parse(www.text.Split('#')[0]);
+            playerName = www.text.Split('#')[1];
+            SceneManager.LoadScene(menuSceneName);
         }
     }
 
@@ -314,6 +426,12 @@ public class GameController : NetworkBehaviour {
                 }
             }
         }
+    }
+
+    IEnumerator CancelPairRoutine() {
+        WWW www = new WWW(url + "CancelPair.php?id=" + id + "&roundID=" + roundID);
+        yield return www;
+        SceneManager.LoadScene(menuSceneName);
     }
 
     IEnumerator RetrieveUnitsRoutine() {
@@ -373,7 +491,6 @@ public class GameController : NetworkBehaviour {
             yield return new WaitForSeconds(pollRate);
             WWW www = new WWW(url + "Poll.php?id=" + id + "&roundID=" + roundID);
             yield return www;
-            print("Poll: " + www.text);
             if (www.text.StartsWith("SPAWN")) {
                 string json = www.text.Split('_')[1];
                 SpawnRequest[] spawnList = JsonUtility.FromJson<SpawnRequestList>(json).spawnList;
@@ -381,20 +498,18 @@ public class GameController : NetworkBehaviour {
                     SpawnEnemyObject(spawnList[i].tileName, spawnList[i].index);
             }
             else if (www.text.StartsWith("GAMEOVER")) {
-                if (!gameover && !isAttacker)
+                int winner = int.Parse(www.text.Split('#')[1]);
+                if (winner == id)
                     Gameover(true);
+                else
+                    Gameover(false);
             }
         }
-    }
-
-    IEnumerator ReturnMenuRoutine() {
-        yield return new WaitForSeconds(returnMenuTime);
-        SceneManager.LoadScene(menuSceneName);
     }
 }
 
 [System.Serializable]
-class PairInfo {
+public class PairInfo {
     public int id;
     public int attackerID;
     public int defenderID;
@@ -405,7 +520,7 @@ class PairInfo {
 }
 
 [System.Serializable]
-class UnitProp {
+public class UnitProp {
     public string name;
     public int number;
     public float cooldown;
@@ -418,12 +533,12 @@ class UnitProp {
 }
 
 [System.Serializable]
-class UnitPropList {
+public class UnitPropList {
     public UnitProp[] propList;
 }
 
 [System.Serializable]
-class SpawnRequest {
+public class SpawnRequest {
     public int index;
     public string tileName;
 
@@ -434,6 +549,6 @@ class SpawnRequest {
 }
 
 [System.Serializable]
-class SpawnRequestList {
+public class SpawnRequestList {
     public SpawnRequest[] spawnList;
 }

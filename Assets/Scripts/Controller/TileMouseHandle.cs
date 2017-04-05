@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class TileMouseHandle : MonoBehaviour {
-    public GameController gameController;
     public int tileIndex;
     public bool isOccupied = false;
 
+    private GameController gameController;
     private bool highlight = false;
     private Renderer render;
 
     private void Start() {
+        gameController = GameObject.Find("Game Controller").GetComponent<GameController>();
         render = gameObject.GetComponent<Renderer>();
     }
 
