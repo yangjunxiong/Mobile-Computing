@@ -3,24 +3,35 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 public class GameController : NetworkBehaviour {
     public GameObject[] attackerPrefabs;
     public GameObject[] defenderPrefabs;
     public Sprite attackWin, attackLose, defendWin, defendLose;
     public AudioClip gameBGM, gameoverAudio;
-    public bool isAttacker = false;
-    public bool inGame = true;
-    public float gameoverTime = 120f;
+    public float pairTryRate;
     public float pollRate;
+    public float gameoverTime = 120f;
+    public float returnMenuTime;
+    public bool isAttacker;
 
-    private int id = 2;
-    private int roundID = 1;
+    // Persistent variables
+    private int id = -1;
     private string playerName;
-    private string enemyName;
+    private int roundID;
+    private int enemyID;
 
-    private bool ready = false;
-    private bool gameover = false;
+    // Variables for "Menu"
+    private Text playerNameText;
+    private GameObject mainCanvas, loginCanvas, regCanvas, startCanvas, helpCanvas, chooseCanvas, queueCanvas;
+    private InputField loginNameField, loginPasswordField;
+    private InputField regNameField, regPasswordField, regConfirmPasswordField;
+    private Button loginButton, registerButton, attackerButton, defenderButton, cancelWaitButton;
+
+    // Variables for "Round"
+    private bool ready;
+    private bool gameover;
     private float timeOfStart;
     private Canvas canvas;
     private AudioSource audioSource;
@@ -37,79 +48,213 @@ public class GameController : NetworkBehaviour {
     private int[] remainingUnitNumber;
     private float[] unitCooldownTime;
 
+    // General constants
+    public string url = "http://mobilecomputing-codingbear.c9users.io/";
+    public string initSceneName = "Init";
+    public string menuSceneName = "Menu";
+    public string gameSceneName = "Round";
+    public string mapSceneName = "Map";
+
+    // Constants for "Menu"
+    private const string mainCanvasName = "mainMenuCanvas";
+    private const string loginCanvasName = "LoginCanvas";
+    private const string regCanvasName = "RegCanvas";
+    private const string startCanvasName = "StartCanvas";
+    private const string helpCanvasName = "HelpCanvas";
+    private const string chooseCanvasName = "ChooseCanvas";
+    private const string queueCanvasName = "QueueCanvas";
+    private const string playerNameTextName = "playerNameText";
+    private const string loginNameInputFieldName = "LoginUsernameInputField";
+    private const string loginPasswordInputFieldName = "LoginPasswordInputField";
+    private const string regNameInputFieldName = "RegUsernameInputField";
+    private const string regPasswordInputFieldName = "RegPasswordInputField";
+    private const string regConfirmPasswordInputFieldName = "RegConfPasswordInputField";
+    private const string loginButtonName = "LoginButton";
+    private const string regButtonName = "RegButton";
+    private const string attackerButtonName = "AttackButton";
+    private const string defenderButtonName = "DefenseButton";
+    private const string cancelWaitButtonName = "CancelWaitButton";
+
+    // Constants for "Round"
     private const int nullObjectIndex = -1;
     private const string attackTileTagName = "AttackTile";
     private const string defendeTileTagName = "DefendeTile";
     private const string tileTagName = "Tile";
     private const string finishPointTagName = "Finish";
-    private const string url = "http://mobilecomputing-codingbear.c9users.io/";
 
-    private void Start() {
-        // Selection according to different scenes
-        if (!inGame)
-            return;
+    void OnEnable() {
+        SceneManager.sceneLoaded += onSceneLoaded;
+    }
 
-        // Retrieve unit data from server
-        Time.timeScale = 0f;
-        StartCoroutine(RetrieveUnitsRoutine());
+    void OnDisable() {
+        SceneManager.sceneLoaded -= onSceneLoaded;
+    }
 
-        // Initialize UI
-        canvas = FindObjectOfType<Canvas>();
-        attackList = canvas.transform.Find("Attack List").gameObject;
-        defendList = canvas.transform.Find("Defende List").gameObject;
-        gameoverImage = canvas.transform.Find("Gameover Image").gameObject;
-        gameoverImage.SetActive(false);
-        timerText = canvas.transform.Find("Timer").transform.Find("Time").GetComponent<Text>();
-
-        // Assign appropriate value according to role
-        if (isAttacker) {
-            defendList.SetActive(false);
-            buttons = attackList.GetComponent<ButtonListController>().buttons;
-            spawnTiles = GameObject.FindGameObjectsWithTag(attackTileTagName);
-            enemyTiles = GameObject.FindGameObjectsWithTag(defendeTileTagName);
-            prefabs = attackerPrefabs;
-            enemyPrefabs = defenderPrefabs;
+    void onSceneLoaded(Scene scene, LoadSceneMode mode) {
+        Time.timeScale = 1f;
+        audioSource.Stop();
+        if (scene.name == initSceneName) {
+            SceneManager.LoadScene(menuSceneName);
         }
-        else {
-            attackList.SetActive(false);
-            buttons = defendList.GetComponent<ButtonListController>().buttons;
-            spawnTiles = GameObject.FindGameObjectsWithTag(defendeTileTagName);
-            enemyTiles = GameObject.FindGameObjectsWithTag(attackTileTagName);
-            prefabs = defenderPrefabs;
-            enemyPrefabs = attackerPrefabs;
-        }
-        otherTiles = GameObject.FindGameObjectsWithTag(tileTagName);
+        else if (scene.name == menuSceneName) {
+            roundID = -1;
+            enemyID = -1;
+            ready = false;
+            gameover = false;
 
-        // Other initialization
-        for (int i = 0; i < spawnTiles.Length; i++)
-            spawnTiles[i].GetComponent<TileMouseHandle>().tileIndex = i;
-        for (int i = 0; i < enemyTiles.Length; i++)
-            enemyTiles[i].GetComponent<TileMouseHandle>().tileIndex = i;
-        activeUnits = new List<GameObject>();
-        finishPoint = GameObject.FindGameObjectWithTag(finishPointTagName).transform;
+            mainCanvas = GameObject.Find(mainCanvasName);
+            startCanvas = GameObject.Find(startCanvasName);
+            loginCanvas = GameObject.Find(loginCanvasName);
+            regCanvas = GameObject.Find(regCanvasName);
+            helpCanvas = GameObject.Find(helpCanvasName);
+            chooseCanvas = GameObject.Find(chooseCanvasName);
+            queueCanvas = GameObject.Find(queueCanvasName);
+
+            loginNameField = GameObject.Find(loginNameInputFieldName).GetComponent<InputField>();
+            loginPasswordField = GameObject.Find(loginPasswordInputFieldName).GetComponent<InputField>();
+            regNameField = GameObject.Find(regNameInputFieldName).GetComponent<InputField>();
+            regPasswordField = GameObject.Find(regPasswordInputFieldName).GetComponent<InputField>();
+            regConfirmPasswordField = GameObject.Find(regConfirmPasswordInputFieldName).GetComponent<InputField>();
+
+            playerNameText = GameObject.Find(playerNameTextName).GetComponent<Text>();
+            loginButton = GameObject.Find(loginButtonName).GetComponent<Button>();
+            loginButton.onClick.AddListener(Login);
+            registerButton = GameObject.Find(regButtonName).GetComponent<Button>();
+            registerButton.onClick.AddListener(Register);
+            attackerButton = GameObject.Find(attackerButtonName).GetComponent<Button>();
+            attackerButton.onClick.AddListener(() => NewGame("attacker"));
+            defenderButton = GameObject.Find(defenderButtonName).GetComponent<Button>();
+            defenderButton.onClick.AddListener(() => NewGame("defender"));
+            cancelWaitButton = GameObject.Find(cancelWaitButtonName).GetComponent<Button>();
+            cancelWaitButton.onClick.AddListener(CancelWait);
+
+            ToggleCanvas(false);
+            if (id == -1)
+                mainCanvas.SetActive(true);
+            else {
+                startCanvas.SetActive(true);
+                playerNameText.text = "Welcome, " + playerName;
+            }
+        }
+        else if (scene.name == gameSceneName) {
+            // Retrieve unit data from server
+            Time.timeScale = 0f;
+            StartCoroutine(RetrieveUnitsRoutine());
+
+            // Initialize UI
+            canvas = FindObjectOfType<Canvas>();
+            attackList = canvas.transform.Find("Attack List").gameObject;
+            defendList = canvas.transform.Find("Defende List").gameObject;
+            gameoverImage = canvas.transform.Find("Gameover Image").gameObject;
+            gameoverImage.SetActive(false);
+            timerText = canvas.transform.Find("Timer").transform.Find("Time").GetComponent<Text>();
+
+            // Assign appropriate value according to role
+            if (isAttacker) {
+                defendList.SetActive(false);
+                buttons = attackList.GetComponent<ButtonListController>().buttons;
+                spawnTiles = GameObject.FindGameObjectsWithTag(attackTileTagName);
+                enemyTiles = GameObject.FindGameObjectsWithTag(defendeTileTagName);
+                prefabs = attackerPrefabs;
+                enemyPrefabs = defenderPrefabs;
+            }
+            else {
+                attackList.SetActive(false);
+                buttons = defendList.GetComponent<ButtonListController>().buttons;
+                spawnTiles = GameObject.FindGameObjectsWithTag(defendeTileTagName);
+                enemyTiles = GameObject.FindGameObjectsWithTag(attackTileTagName);
+                prefabs = defenderPrefabs;
+                enemyPrefabs = attackerPrefabs;
+            }
+            otherTiles = GameObject.FindGameObjectsWithTag(tileTagName);
+
+            // Other initialization
+            for (int i = 0; i < spawnTiles.Length; i++)
+                spawnTiles[i].GetComponent<TileMouseHandle>().tileIndex = i;
+            for (int i = 0; i < enemyTiles.Length; i++)
+                enemyTiles[i].GetComponent<TileMouseHandle>().tileIndex = i;
+            activeUnits = new List<GameObject>();
+            finishPoint = GameObject.FindGameObjectWithTag(finishPointTagName).transform;
+            audioSource.Play();
+        }
+        else if (scene.name == mapSceneName) {
+
+        }
+    }
+
+    private void Awake() {
+        DontDestroyOnLoad(gameObject);
         audioSource = GetComponent<AudioSource>();
         audioSource.clip = gameBGM;
-        audioSource.Play();
     }
 
     private void Update() {
-        if (!inGame)
-            return;
-        if (!ready || gameover)
-            return;
-
-        int tempTime = (int)(gameoverTime - (Time.time - timeOfStart));
-        timerText.text = (tempTime / 60).ToString() + " : " + (tempTime % 60).ToString();
-
-        // Gameover situation: attack uses up all units
-        if (isAttacker) {
-            if (activeUnits.Count <= 0 && remainingUnitNumber[0] == 0 && remainingUnitNumber[1] == 0 && remainingUnitNumber[2] == 0 && remainingUnitNumber[3] == 0)
-                RequestGameOver(false);
+        if (SceneManager.GetActiveScene().name == gameSceneName) {
+            if (!ready || gameover)
+                return;
+            int tempTime = (int)(gameoverTime - (Time.time - timeOfStart));
+            timerText.text = (tempTime / 60).ToString() + " : " + (tempTime % 60).ToString();
+            // Gameover situation: attack uses up all units
+            if (isAttacker) {
+                if (activeUnits.Count <= 0 && remainingUnitNumber[0] == 0 && remainingUnitNumber[1] == 0 && remainingUnitNumber[2] == 0 && remainingUnitNumber[3] == 0)
+                    RequestGameOver(false);
+            }
+            // Gameover situation: time up
+            if (tempTime <= 0f)
+                RequestGameOver(isAttacker ? false : true);
         }
+        else if (SceneManager.GetActiveScene().name == menuSceneName) {
 
-        // Gameover situation: time up
-        if (tempTime <= 0f)
-            RequestGameOver(isAttacker ? false : true);
+        }
+        else if (SceneManager.GetActiveScene().name == mapSceneName) {
+
+        }
+    }
+
+    public void LoadScene(string name) {
+        SceneManager.LoadScene(name);
+    }
+
+    // Send pair request to server
+    public void NewGame(string side) {
+        if (id == -1)
+            return;
+        StartCoroutine(PairRoutine(side));
+    }
+
+    public void Login() {
+        if (id != -1)
+            return;
+        string name = loginNameField.text;
+        string password = loginPasswordField.text;
+        loginNameField.text = "";
+        loginPasswordField.text = "";
+        StartCoroutine(LoginRoutine(name, password));
+    }
+
+    public void Register() {
+        if (id != -1)
+            return;
+        string name = regNameField.text;
+        string password = regPasswordField.text;
+        string password2 = regConfirmPasswordField.text;
+        if (password == password2) {
+            regNameField.text = "";
+            regPasswordField.text = "";
+            regConfirmPasswordField.text = "";
+            StartCoroutine(RegisterRoutine(name, password));
+        }
+    }
+
+    public void CancelWait() {
+        StopAllCoroutines();
+        StartCoroutine(CancelPairRoutine());
+    }
+
+    public void ChangeToMap() {
+        if (id == -1)
+            return;
+        SceneManager.LoadScene(mapSceneName);
     }
 
     // When spawn buttons are clicked, this function will change selected unit to spawn
@@ -162,7 +307,8 @@ public class GameController : NetworkBehaviour {
 
     // This will send Gameover request to server
     public void RequestGameOver(bool win) {
-        StartCoroutine(RequestGameoverRoutine(win));
+        if (!gameover)
+            StartCoroutine(RequestGameoverRoutine(win));
     }
 
     public void UnitDie(GameObject unit) {
@@ -184,10 +330,19 @@ public class GameController : NetworkBehaviour {
         return finishPoint;
     }
 
+    private void ToggleCanvas(bool on) {
+        mainCanvas.SetActive(on);
+        loginCanvas.SetActive(on);
+        regCanvas.SetActive(on);
+        startCanvas.SetActive(on);
+        helpCanvas.SetActive(on);
+        chooseCanvas.SetActive(on);
+        queueCanvas.SetActive(on);
+    }
+
     private void Gameover(bool win) {
         if (gameover)
             return;
-
         gameover = true;
         StopCoroutine(PollRoutine());
         audioSource.clip = gameoverAudio;
@@ -222,6 +377,61 @@ public class GameController : NetworkBehaviour {
                 buttons[i].interactable = on;
         for (int i = 0; i < spawnTiles.Length; i++)
             spawnTiles[i].layer = on ? 0 : 2;
+    }
+
+    IEnumerator LoginRoutine(string name, string password) {
+        WWW www = new WWW(url + "Login.php?name=" + name + "&password=" + password);
+        yield return www;
+        if (www.text != "NO") {
+            id = int.Parse(www.text.Split('#')[0]);
+            playerName = www.text.Split('#')[1];
+            SceneManager.LoadScene(menuSceneName);
+        }
+        else {
+            playerNameText.text = "Wrong name or password!";
+        }
+    }
+
+    IEnumerator RegisterRoutine(string name, string password) {
+        WWW www = new WWW(url + "Register.php?name=" + name + "&password=" + password);
+        yield return www;
+        if (www.text != "NO")
+        {
+            id = int.Parse(www.text.Split('#')[0]);
+            playerName = www.text.Split('#')[1];
+            SceneManager.LoadScene(menuSceneName);
+        }
+    }
+
+    IEnumerator PairRoutine(string side) {
+        while (true) {
+            yield return new WaitForSeconds(pairTryRate);
+            WWW www = new WWW(url + "Pair.php?id=" + id + "&roundID=" + roundID + "&side=" + side);
+            yield return www;
+
+            if (www.text != "NO") {
+                PairInfo pair = JsonUtility.FromJson<PairInfo>(www.text);
+                roundID = pair.id;
+                if (pair.attackerID > 0 && pair.defenderID > 0) {
+                    if (pair.attackerID == id) {
+                        enemyID = pair.defenderID;
+                        isAttacker = true;
+                    }
+                    else {
+                        enemyID = pair.attackerID;
+                        isAttacker = false;
+                    }
+                    SceneManager.LoadScene(gameSceneName);
+                    break;
+                }
+            }
+        }
+    }
+
+    IEnumerator CancelPairRoutine() {
+        WWW www = new WWW(url + "CancelPair.php?id=" + id + "&roundID=" + roundID);
+        yield return www;
+        SceneManager.LoadScene(menuSceneName);
     }
 
     IEnumerator RetrieveUnitsRoutine() {
@@ -281,7 +491,6 @@ public class GameController : NetworkBehaviour {
             yield return new WaitForSeconds(pollRate);
             WWW www = new WWW(url + "Poll.php?id=" + id + "&roundID=" + roundID);
             yield return www;
-            print("Poll: " + www.text);
             if (www.text.StartsWith("SPAWN")) {
                 string json = www.text.Split('_')[1];
                 SpawnRequest[] spawnList = JsonUtility.FromJson<SpawnRequestList>(json).spawnList;
@@ -289,15 +498,29 @@ public class GameController : NetworkBehaviour {
                     SpawnEnemyObject(spawnList[i].tileName, spawnList[i].index);
             }
             else if (www.text.StartsWith("GAMEOVER")) {
-                if (!gameover && !isAttacker)
+                int winner = int.Parse(www.text.Split('#')[1]);
+                if (winner == id)
                     Gameover(true);
+                else
+                    Gameover(false);
             }
         }
     }
 }
 
 [System.Serializable]
-class UnitProp {
+public class PairInfo {
+    public int id;
+    public int attackerID;
+    public int defenderID;
+
+    public PairInfo(int id) {
+        this.id = id;
+    }
+}
+
+[System.Serializable]
+public class UnitProp {
     public string name;
     public int number;
     public float cooldown;
@@ -310,12 +533,12 @@ class UnitProp {
 }
 
 [System.Serializable]
-class UnitPropList {
+public class UnitPropList {
     public UnitProp[] propList;
 }
 
 [System.Serializable]
-class SpawnRequest {
+public class SpawnRequest {
     public int index;
     public string tileName;
 
@@ -326,6 +549,6 @@ class SpawnRequest {
 }
 
 [System.Serializable]
-class SpawnRequestList {
+public class SpawnRequestList {
     public SpawnRequest[] spawnList;
 }

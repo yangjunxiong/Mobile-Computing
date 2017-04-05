@@ -9,13 +9,17 @@ public class ButtonController : MonoBehaviour {
     public int number;
     public float cooldownTime;
     public bool isCooldown = false;
+    public int index;
 
+    private GameController gameController;
     private float speed;
     private float remainingTime = 0f;
     private float height = 0f;
     private float buttonSizeX, buttonSizeY;
 
     private void Start() {
+        gameController = GameObject.Find("Game Controller").GetComponent<GameController>();
+        GetComponent<Button>().onClick.AddListener(() => gameController.SelectObjectToSpawn(index));
         buttonSizeX = cooldownImage.rectTransform.sizeDelta.x;
         buttonSizeY = cooldownImage.rectTransform.sizeDelta.y;
     }

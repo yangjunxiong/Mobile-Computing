@@ -13,13 +13,11 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile>
-    </CompilerResponseFile>
+    <CompilerResponseFile></CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>Android:13</UnityBuildTarget>
     <UnityVersion>5.5.2f1</UnityVersion>
-    <RootNamespace>
-    </RootNamespace>
+    <RootNamespace></RootNamespace>
     <LangVersion Condition=" '$(VisualStudioVersion)' != '10.0' ">4</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -96,8 +94,13 @@
     <Compile Include="Assets\Scripts\Controller\ButtonListController.cs" />
     <Compile Include="Assets\Scripts\Controller\GameController.cs" />
     <Compile Include="Assets\Scripts\Controller\HealthBarController.cs" />
+    <Compile Include="Assets\Scripts\Controller\RoundBackButtonController.cs" />
     <Compile Include="Assets\Scripts\Controller\SoundPlayerController.cs" />
     <Compile Include="Assets\Scripts\Controller\TileMouseHandle.cs" />
+    <Compile Include="Assets\Scripts\MainMenu\LoginOnClick.cs" />
+    <Compile Include="Assets\Scripts\MainMenu\QuitOnClick.cs" />
+    <Compile Include="Assets\Scripts\MainMenu\RegOnClick.cs" />
+    <Compile Include="Assets\Scripts\MainMenu\Rotate.cs" />
     <Compile Include="Assets\Scripts\Physics\ParticleController.cs" />
     <Compile Include="Assets\Scripts\Physics\Projectile.cs" />
     <Compile Include="Assets\Scripts\Physics\RegularBulletController.cs" />
