@@ -59,11 +59,11 @@ public class GameManager : Singleton<GameManager> {
 
 		player.GetComponent<ObjectPosition> ().setPositionOnMap (player_loc.loc);
 
-		GameObject[] objectsOnMap = GameObject.FindGameObjectsWithTag ("ObjectOnMap");
+		/*GameObject[] objectsOnMap = GameObject.FindGameObjectsWithTag ("ObjectOnMap");
 
 		foreach (GameObject obj in objectsOnMap) {
 			obj.GetComponent<ObjectPosition> ().setPositionOnMap ();
-		}
+		}*/
     }
 
     void Update () {

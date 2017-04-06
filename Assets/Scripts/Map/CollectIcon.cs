@@ -38,15 +38,13 @@ public class CollectIcon : MonoBehaviour {
         //print("hello");
         getIcon.turnOff();
         cardNo = getIcon.randomCard;
-
         cardObject.SetActive(true);
-
         System.Random rndNum = new System.Random();
 
         if (cardNo == 1)
         {
             card.sprite = pencile;
-            itemName = "pencile";
+            itemName = "pencil";
             itemNum = rndNum.Next(1, 6);
         }
         else if (cardNo == 2)
@@ -88,10 +86,10 @@ public class CollectIcon : MonoBehaviour {
         else if (cardNo == 8)
         {
             card.sprite = reaper;
-            itemName = "reaper";
+            itemName = "skull";
             itemNum = rndNum.Next(1, 3);
         }
-
+        cardObject.GetComponentInChildren<AddUnit>().SetValue(itemName, itemNum);
         numCardsText.text = itemNum + "";
     }
 }

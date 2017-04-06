@@ -14,20 +14,25 @@ public class GameController : NetworkBehaviour {
     public float pollRate;
     public float gameoverTime = 120f;
     public float returnMenuTime;
-    public bool isAttacker;
 
     // Persistent variables
-    private int id = -1;
-    private string playerName;
-    private int roundID;
-    private int enemyID;
+    [HideInInspector]
+    public int id = -1;
+    [HideInInspector]
+    public string playerName;
+    [HideInInspector]
+    public int roundID;
+    [HideInInspector]
+    public int enemyID;
+    [HideInInspector]
+    public bool isAttacker;
 
     // Variables for "Menu"
     private Text playerNameText;
     private GameObject mainCanvas, loginCanvas, regCanvas, startCanvas, helpCanvas, chooseCanvas, queueCanvas;
     private InputField loginNameField, loginPasswordField;
     private InputField regNameField, regPasswordField, regConfirmPasswordField;
-    private Button loginButton, registerButton, attackerButton, defenderButton, cancelWaitButton;
+    private Button loginButton, registerButton, attackerButton, defenderButton, cancelWaitButton, mapButton;
 
     // Variables for "Round"
     private bool ready;
@@ -74,6 +79,7 @@ public class GameController : NetworkBehaviour {
     private const string attackerButtonName = "AttackButton";
     private const string defenderButtonName = "DefenseButton";
     private const string cancelWaitButtonName = "CancelWaitButton";
+    private const string mapButtonName = "MapButton";
 
     // Constants for "Round"
     private const int nullObjectIndex = -1;
@@ -127,10 +133,14 @@ public class GameController : NetworkBehaviour {
             defenderButton.onClick.AddListener(() => NewGame("defender"));
             cancelWaitButton = GameObject.Find(cancelWaitButtonName).GetComponent<Button>();
             cancelWaitButton.onClick.AddListener(CancelWait);
+            mapButton = GameObject.Find(mapButtonName).GetComponent<Button>();
+            mapButton.onClick.AddListener(ChangeToMap);
 
             ToggleCanvas(false);
-            if (id == -1)
+            if (id == -1) {
                 mainCanvas.SetActive(true);
+                playerNameText.text = "Please login !";
+            }
             else {
                 startCanvas.SetActive(true);
                 playerNameText.text = "Welcome, " + playerName;
@@ -138,6 +148,8 @@ public class GameController : NetworkBehaviour {
         }
         else if (scene.name == gameSceneName) {
             // Retrieve unit data from server
+            audioSource.clip = gameBGM;
+            audioSource.Play();
             Time.timeScale = 0f;
             StartCoroutine(RetrieveUnitsRoutine());
 
@@ -175,7 +187,6 @@ public class GameController : NetworkBehaviour {
                 enemyTiles[i].GetComponent<TileMouseHandle>().tileIndex = i;
             activeUnits = new List<GameObject>();
             finishPoint = GameObject.FindGameObjectWithTag(finishPointTagName).transform;
-            audioSource.Play();
         }
         else if (scene.name == mapSceneName) {
 
@@ -185,7 +196,6 @@ public class GameController : NetworkBehaviour {
     private void Awake() {
         DontDestroyOnLoad(gameObject);
         audioSource = GetComponent<AudioSource>();
-        audioSource.clip = gameBGM;
     }
 
     private void Update() {
@@ -307,8 +317,10 @@ public class GameController : NetworkBehaviour {
 
     // This will send Gameover request to server
     public void RequestGameOver(bool win) {
-        if (!gameover)
+        if (!gameover) {
             StartCoroutine(RequestGameoverRoutine(win));
+            gameover = true;
+        }
     }
 
     public void UnitDie(GameObject unit) {
@@ -341,9 +353,6 @@ public class GameController : NetworkBehaviour {
     }
 
     private void Gameover(bool win) {
-        if (gameover)
-            return;
-        gameover = true;
         StopCoroutine(PollRoutine());
         audioSource.clip = gameoverAudio;
         audioSource.Play();
@@ -497,8 +506,10 @@ public class GameController : NetworkBehaviour {
                 for (int i=0; i<spawnList.Length; i++)
                     SpawnEnemyObject(spawnList[i].tileName, spawnList[i].index);
             }
-            else if (www.text.StartsWith("GAMEOVER")) {
+            else if (www.text.StartsWith("GAMEOVER") && !gameover) {
+                gameover = true;
                 int winner = int.Parse(www.text.Split('#')[1]);
+                print("Be requested gameover id=" + id + " winner=" + winner);
                 if (winner == id)
                     Gameover(true);
                 else
