@@ -30,9 +30,10 @@ public class GameController : NetworkBehaviour {
     // Variables for "Menu"
     private Text playerNameText;
     private GameObject mainCanvas, loginCanvas, regCanvas, startCanvas, helpCanvas, chooseCanvas, queueCanvas;
+    private InputField settingInputField;
     private InputField loginNameField, loginPasswordField;
     private InputField regNameField, regPasswordField, regConfirmPasswordField;
-    private Button loginButton, registerButton, attackerButton, defenderButton, cancelWaitButton, mapButton;
+    private Button settingButton, loginButton, registerButton, attackerButton, defenderButton, cancelWaitButton, mapButton;
 
     // Variables for "Round"
     private bool ready;
@@ -69,11 +70,13 @@ public class GameController : NetworkBehaviour {
     private const string chooseCanvasName = "ChooseCanvas";
     private const string queueCanvasName = "QueueCanvas";
     private const string playerNameTextName = "playerNameText";
+    private const string settingInputFieldName = "ServerAddressInput";
     private const string loginNameInputFieldName = "LoginUsernameInputField";
     private const string loginPasswordInputFieldName = "LoginPasswordInputField";
     private const string regNameInputFieldName = "RegUsernameInputField";
     private const string regPasswordInputFieldName = "RegPasswordInputField";
     private const string regConfirmPasswordInputFieldName = "RegConfPasswordInputField";
+    private const string settingButtonName = "Setting";
     private const string loginButtonName = "LoginButton";
     private const string regButtonName = "RegButton";
     private const string attackerButtonName = "AttackButton";
@@ -116,6 +119,8 @@ public class GameController : NetworkBehaviour {
             chooseCanvas = GameObject.Find(chooseCanvasName);
             queueCanvas = GameObject.Find(queueCanvasName);
 
+            settingInputField = GameObject.Find(settingInputFieldName).GetComponent<InputField>();
+            settingInputField.text = url;
             loginNameField = GameObject.Find(loginNameInputFieldName).GetComponent<InputField>();
             loginPasswordField = GameObject.Find(loginPasswordInputFieldName).GetComponent<InputField>();
             regNameField = GameObject.Find(regNameInputFieldName).GetComponent<InputField>();
@@ -123,6 +128,8 @@ public class GameController : NetworkBehaviour {
             regConfirmPasswordField = GameObject.Find(regConfirmPasswordInputFieldName).GetComponent<InputField>();
 
             playerNameText = GameObject.Find(playerNameTextName).GetComponent<Text>();
+            settingButton = GameObject.Find(settingButtonName).GetComponent<Button>();
+            settingButton.onClick.AddListener(SetServer);
             loginButton = GameObject.Find(loginButtonName).GetComponent<Button>();
             loginButton.onClick.AddListener(Login);
             registerButton = GameObject.Find(regButtonName).GetComponent<Button>();
@@ -231,6 +238,11 @@ public class GameController : NetworkBehaviour {
         if (id == -1)
             return;
         StartCoroutine(PairRoutine(side));
+    }
+
+    public void SetServer() {
+        url = settingInputField.text;
+        playerNameText.text = "You have changed server address!";
     }
 
     public void Login() {

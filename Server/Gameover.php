@@ -10,9 +10,9 @@ while ($row = $result->fetch_assoc()) {
         echo "YES";
         return;
     }
-    if ($win == "true")
+    if ($win == "True" || $win == "true")
         $winner = $id;
-    else 
+    else if ($win == "False" || $win == "false")
         $winner = $id==$row["attackerID"] ? $row["defenderID"] : $row["attackerID"];
     date_default_timezone_set("Asia/Hong_Kong");
     $time = date("Y-m-d H:i:s");
