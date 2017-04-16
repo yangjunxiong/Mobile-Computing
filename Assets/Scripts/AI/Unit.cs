@@ -60,8 +60,9 @@ public class Unit : MonoBehaviour {
             transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z + speed * Time.deltaTime);
         }
 
-        if (isAttacker && transform.position.z <= controller.GetFinishPoint().position.z)
+        if (isAttacker && transform.position.z <= controller.GetFinishPoint().position.z) {
             controller.RequestGameOver(controller.isAttacker);
+        }
     }
 
     public virtual void GetDamage(int damage) {

@@ -222,6 +222,7 @@ public class GameController : NetworkBehaviour {
     }
 
     public void LoadScene(string name) {
+        StopAllCoroutines();
         SceneManager.LoadScene(name);
     }
 
@@ -318,8 +319,8 @@ public class GameController : NetworkBehaviour {
     // This will send Gameover request to server
     public void RequestGameOver(bool win) {
         if (!gameover) {
-            StartCoroutine(RequestGameoverRoutine(win));
             gameover = true;
+            StartCoroutine(RequestGameoverRoutine(win));
         }
     }
 
@@ -509,7 +510,6 @@ public class GameController : NetworkBehaviour {
             else if (www.text.StartsWith("GAMEOVER") && !gameover) {
                 gameover = true;
                 int winner = int.Parse(www.text.Split('#')[1]);
-                print("Be requested gameover id=" + id + " winner=" + winner);
                 if (winner == id)
                     Gameover(true);
                 else

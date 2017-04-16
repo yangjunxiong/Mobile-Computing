@@ -21,8 +21,7 @@ public class Paper : Unit {
         base.Attack();
         if (!isAttacking && Time.time > nextFire && animator.GetCurrentAnimatorStateInfo(0).IsName(animMoveName))
         {
-            if (!toAttack)
-                toAttack = FindEnemyInAttackRange();
+            toAttack = FindEnemyInAttackRange();
             if (toAttack)
             {
                 animator.SetTrigger(animAttackName);
@@ -55,10 +54,12 @@ public class Paper : Unit {
     IEnumerator AttackRoutine(GameObject toAttack)
     {
         yield return new WaitForSeconds(FindAnimationLength(animAttackName));
-        toAttack.GetComponentInChildren<Unit>().GetDamage(damage);
-        nextFire = Time.time + fireRate;
-        audioSource.clip = attackAudio;
-        audioSource.Play();
+        if (toAttack) {
+            toAttack.GetComponentInChildren<Unit>().GetDamage(damage);
+            nextFire = Time.time + fireRate;
+            audioSource.clip = attackAudio;
+            audioSource.Play();
+        }
         isAttacking = false;
     }
 

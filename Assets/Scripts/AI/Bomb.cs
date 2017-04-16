@@ -23,10 +23,8 @@ public class Bomb : Unit {
         base.Attack();
         if (!isAttacking && animator.GetCurrentAnimatorStateInfo(0).IsName(animMoveName))
         {
-            if (!toAttack)
-                toAttack = FindEnemyInAttackRange();
-            if (toAttack)
-            {
+            toAttack = FindEnemyInAttackRange();
+            if (toAttack) {
                 animator.SetTrigger(animAttackName);
                 isAttacking = true;
                 StartCoroutine(AttackRoutine(toAttack));
@@ -59,12 +57,14 @@ public class Bomb : Unit {
         Instantiate(bombParticle, transform.position, Quaternion.identity).GetComponent<ParticleController>().Vanish(particleLastTime);
         GameObject[] list = controller.GetActiveUnits().ToArray();
         for (int i = 0; i < list.Length; i++) {
-            Vector3 position = list[i].transform.position;
-            Unit other = list[i].GetComponent<Unit>();
-            if (!other)
-                other = list[i].GetComponentInChildren<Unit>();
-            if (other.isAttacker != isAttacker && Vector3.Distance(position, transform.position) <= explosionRange)
-                other.GetDamage(damage);
+            if (list[i]) {
+                Vector3 position = list[i].transform.position;
+                Unit other = list[i].GetComponent<Unit>();
+                if (!other)
+                    other = list[i].GetComponentInChildren<Unit>();
+                if (other.isAttacker != isAttacker && Vector3.Distance(position, transform.position) <= explosionRange)
+                    other.GetDamage(damage);
+            }
         }
         Instantiate(soundPlayer, Vector3.zero, Quaternion.identity).GetComponent<SoundPlayerController>().Play(attackAudio, attackAudio.length);
         isAttacking = false;
